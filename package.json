@@ -1,0 +1,33 @@
+{
+  "name": "online-bank-api",
+  "version": "1.0.0",
+  "description": "An api that exposes endpoints for all traditional operations of a regular bank",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Samuel-Isirima/online-bank-api.git"
+  },
+  "keywords": [
+    "api",
+    "bank",
+    "online",
+    "fintech"
+  ],
+  "author": "Samuel Isirima",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Samuel-Isirima/online-bank-api/issues"
+  },
+  "homepage": "https://github.com/Samuel-Isirima/online-bank-api#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "sequelize": "^6.32.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.7",
+    "typescript": "^5.2.2"
+  }
+}
