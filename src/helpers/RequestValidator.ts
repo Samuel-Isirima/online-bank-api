@@ -7,4 +7,4 @@ const RequestValidator: any = async (body: any, rules: any, customMessages: any,
     validation.fails(() => callback(validation.errors, false));
 };
 
-export default RequestValidator;
+export default RequestValidator;  

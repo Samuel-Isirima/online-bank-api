@@ -18,19 +18,15 @@ await RequestValidator(req.body, validationRule, {}, (err: any, status: any) =>
 {
     if (!status) 
     {
-        res.status(412).send({
+        return res.status(412).send({
                 success: false,
                 message: 'Validation failed',
                 data: err
             });
-    } 
-    else 
-    {
-        next();
-    }
+        } 
 }).catch( err => console.log(err))
 
-   
+   console.log('After res send')
     const payload = req.body  
     try 
     {
