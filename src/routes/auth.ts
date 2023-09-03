@@ -10,8 +10,8 @@ authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: R
         "email": "required|string|email",
         "first_name": "required|string",
         "last_name": "required|string",
-        "password": "required|string|min:6|confirmed",
-        "gender": "string"
+        "password": "required|string|min:8",
+        "confirm_password": "required|string|min:8",
     };
 
 await RequestValidator(req.body, validationRule, {}, (err: any, status: any) => 
@@ -30,11 +30,22 @@ await RequestValidator(req.body, validationRule, {}, (err: any, status: any) =>
     }
 }).catch( err => console.log(err))
 
-
-    async (payload: UserObjectForCreateUser): Promise<UserObjectFromDatabase> => {
-        const user = await User.create(payload)
-        return user
+   
+    const payload = req.body  
+    try 
+    {
+    const user: UserObjectFromDatabase = await User.create(payload)
+    } 
+    catch (error) 
+    {
+    console.log(error)
+    return res.status(403).send({ message: `An unexpected error has occured. Please try again later.`,
+    error: error})
     }
+
+    return res.status(200).send({ message: `Account created successfully. Welcome to the bank API!`})
+
+
 })
 
 authRouter.post('/login', async(req: Request, res: Response) => 

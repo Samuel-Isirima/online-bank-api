@@ -11,10 +11,10 @@ app.use('/api/v1', routes)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/', async(req: Request, res: Response): Promise<Response> => 
-{
-    return res.status(200).send({ message: `Welcome to the bank API! \n Endpoints available at http://localhost:${port}/api/v1` })
-})
+// app.get('/', async(req: Request, res: Response): Promise<Response> => 
+// {
+//     return res.status(200).send({ message: `Welcome to the bank API! \n Endpoints available at http://localhost:${port}/api/v1` })
+// })
 
 try 
 {
