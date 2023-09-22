@@ -11,6 +11,13 @@ interface UserAttributes {
   created_at?: Date;
   updated_at?: Date;
   deleted_at?: Date;
+  token?: string;
+
+  getUserByID: (id: number) => Promise<User | null>
+  getUserByEmail: (email: string) => Promise<User | null>
+  generatePasswordHash: (password: string) => Promise<string>
+  getUserByToken: (token: string) => Promise<User | null>
+  generateToken: () => Promise<string>
 }
 
 export interface UserObjectFromDatabase extends Required<UserAttributes> {}
@@ -28,39 +35,57 @@ class User extends Model<UserAttributes, UserObjectForCreateUser> implements Use
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
     public readonly deleted_at!: Date;
+
+
+    //methods
+    public async getUserByID(id: number): Promise<User | null> {
+        return User.findOne({ where: { id: id } })
+    }
+    public getUserByEmail!: (email: string) => Promise<User | null>
+    public generatePasswordHash!: (password: string) => Promise<string>
+    public getUserByToken!: (token: string) => Promise<User | null>
+    public generateToken!: () => Promise<string>
 }
 
 
 
 User.init({
-    id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    first_name: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    last_name: {
-        type: DataTypes.STRING,
-        allowNull: false
-      },
-    email: {
-        type: DataTypes.STRING,
-        allowNull: false
-      },  
-    password: {
-        type: DataTypes.STRING,
-        allowNull: false
-      },
-    },
+  id: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    autoIncrement: true,
+    primaryKey: true,
+  },
+  first_name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  last_name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  getUserByID: '',
+  getUserByEmail: '',
+  generatePasswordHash: '',
+  getUserByToken: '',
+  generateToken: ''
+},
+    
     {
     tableName: 'users',
     sequelize: DatabaseConnection,
     paranoid: true,
     updatedAt: 'updated_at',
     createdAt: 'created_at'
-    })
+    },
+    )
   
   export default User

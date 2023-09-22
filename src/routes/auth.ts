@@ -7,7 +7,7 @@ const authRouter: Router = Router()
 authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
 {
     const validationRule = {
-        "email": "required|string|email",
+        "email": "required|string|email|unique:users",
         "first_name": "required|string",
         "last_name": "required|string",
         "password": "required|string|min:8",
@@ -26,7 +26,6 @@ await RequestValidator(req.body, validationRule, {}, (err: any, status: any) =>
         } 
 }).catch( err => console.log(err))
 
-   console.log('After res send')
     const payload = req.body  
     try 
     {
