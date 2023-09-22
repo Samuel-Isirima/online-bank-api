@@ -1,6 +1,7 @@
 
 import { DataTypes, Model, Optional } from 'sequelize'
 import DatabaseConnection from '../database/DatabaseConnection';
+import bcrypt from 'bcrypt';
 
 interface UserAttributes {
   id: number;
@@ -11,13 +12,6 @@ interface UserAttributes {
   created_at?: Date;
   updated_at?: Date;
   deleted_at?: Date;
-  token?: string;
-
-  getUserByID: (id: number) => Promise<User | null>
-  getUserByEmail: (email: string) => Promise<User | null>
-  generatePasswordHash: (password: string) => Promise<string>
-  getUserByToken: (token: string) => Promise<User | null>
-  generateToken: () => Promise<string>
 }
 
 export interface UserObjectFromDatabase extends Required<UserAttributes> {}
@@ -35,16 +29,7 @@ class User extends Model<UserAttributes, UserObjectForCreateUser> implements Use
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
     public readonly deleted_at!: Date;
-
-
-    //methods
-    public async getUserByID(id: number): Promise<User | null> {
-        return User.findOne({ where: { id: id } })
-    }
-    public getUserByEmail!: (email: string) => Promise<User | null>
-    public generatePasswordHash!: (password: string) => Promise<string>
-    public getUserByToken!: (token: string) => Promise<User | null>
-    public generateToken!: () => Promise<string>
+    
 }
 
 
@@ -71,21 +56,16 @@ User.init({
   password: {
     type: DataTypes.STRING,
     allowNull: false
-  },
-  getUserByID: '',
-  getUserByEmail: '',
-  generatePasswordHash: '',
-  getUserByToken: '',
-  generateToken: ''
+  }
 },
-    
-    {
-    tableName: 'users',
-    sequelize: DatabaseConnection,
-    paranoid: true,
-    updatedAt: 'updated_at',
-    createdAt: 'created_at'
-    },
-    )
+
+{
+tableName: 'users',
+sequelize: DatabaseConnection,
+paranoid: true,
+updatedAt: 'updated_at',
+createdAt: 'created_at'
+},
+)
   
-  export default User
+export default User

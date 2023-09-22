@@ -2,12 +2,12 @@ import { Router, Request, Response, NextFunction} from 'express'
 import bodyParser from 'body-parser';
 import User, { UserObjectForCreateUser, UserObjectFromDatabase } from '../models/User'
 import RequestValidator from '../helpers/RequestValidator';
-
+import bcrypt from 'bcrypt';
 const authRouter: Router = Router()
 authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
 {
     const validationRule = {
-        "email": "required|string|email|unique:users",
+        "email": "required|string|email",
         "first_name": "required|string",
         "last_name": "required|string",
         "password": "required|string|min:8",
@@ -29,6 +29,12 @@ await RequestValidator(req.body, validationRule, {}, (err: any, status: any) =>
     const payload = req.body  
     try 
     {
+    var password: string = payload.password
+    var saltRounds: number = 10
+    var hashed_password: String = await bcrypt.hash(password, saltRounds)
+    payload.password = hashed_password
+          
+    
     const user: UserObjectFromDatabase = await User.create(payload)
     } 
     catch (error) 
