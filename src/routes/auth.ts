@@ -4,6 +4,7 @@ import User, { UserObjectForCreateUser, UserObjectFromDatabase } from '../models
 import RequestValidator from '../helpers/RequestValidator';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import UserService from '../services/UserService';
 const authRouter: Router = Router()
 
 
@@ -94,9 +95,10 @@ authRouter.post('/login', bodyParser.urlencoded(), async(req: Request, res: Resp
                     {
                             const token = jwt.sign({ id: user.id?.toString(), name: user.first_name }, `U9zCG5J?KS?0}Yq`, 
                             {
-                              expiresIn: '2 days',
+                              expiresIn: '30 days',
                             });
-                       
+                        //Now updae the user with the token
+                        User.update({ token: token }, { where: { id: user.id } })
                         return res.status(200).send({ message: `Login successful`, user: {first_name: user.first_name, email: user.email, token: token}})
                     }
                     else
@@ -107,6 +109,7 @@ authRouter.post('/login', bodyParser.urlencoded(), async(req: Request, res: Resp
             }
         })
 })
+
 authRouter.post('/change-password/generate-token', async(req: Request, res: Response) => 
 {
    
@@ -122,5 +125,26 @@ authRouter.post('/verify-account', async(req: Request, res: Response) =>
 {
    
 })
+
+authRouter.get('/user', async(req: Request, res: Response) =>
+{
+    const token: string | undefined = req.header('authorization');
+    if(token === undefined)
+    {
+        return res.status(401).send({ message: `Unauthorized`})
+    }
+
+    console.log(token)
+    const user: User | null = await UserService.getUserByToken(token)
+
+    if(user === null)
+    {
+        return res.status(404).send({ message: `User not found`})
+    }
+
+    //Return user
+    return res.status(200).send({ message: `User found`, user: {first_name: user?.first_name, email: user?.email, token: user?.token}})
+})
+
 
 export default authRouter

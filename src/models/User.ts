@@ -12,6 +12,7 @@ interface UserAttributes {
   created_at?: Date;
   updated_at?: Date;
   deleted_at?: Date;
+  token?: string;
 }
 
 export interface UserObjectFromDatabase extends Required<UserAttributes> {}
@@ -24,11 +25,13 @@ class User extends Model<UserAttributes, UserObjectForCreateUser> implements Use
     public last_name!: string
     public email!: string
     public password!: string
+    public token!: string
   
     // timestamps!
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
     public readonly deleted_at!: Date;
+
     
 }
 
@@ -56,7 +59,11 @@ User.init({
   password: {
     type: DataTypes.STRING,
     allowNull: false
-  }
+  },
+  token: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
 },
 
 {
