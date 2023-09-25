@@ -133,10 +133,7 @@ authRouter.get('/user', async(req: Request, res: Response) =>
     {
         return res.status(401).send({ message: `Unauthorized`})
     }
-
-    console.log(token)
     const user: User | null = await UserService.getUserByToken(token)
-
     if(user === null)
     {
         return res.status(404).send({ message: `User not found`})
