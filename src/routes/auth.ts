@@ -117,7 +117,44 @@ authRouter.post('/change-password/generate-token', async(req: Request, res: Resp
 
 authRouter.post('/change-password', async(req: Request, res: Response) => 
 {
-   
+    const validationRule = {
+        "old_password": "required|string|min:8",
+        "password": "required|string|min:8",
+        "confirm_password": "required|string|min:8",
+    };
+
+    await RequestValidator(req.body, validationRule, {}, (err: any, status: any) => 
+    {
+        if (!status) 
+        {
+            return res.status(412).send({
+                    success: false,
+                    message: 'Validation failed',
+                    data: err
+                });
+            } 
+    }).catch( err => console.log(err))
+
+    const payload = req.body  
+    try 
+    {
+    var password: string = payload.password
+    var saltRounds: number = 10
+    var hashed_password: String = await bcrypt.hash(password, saltRounds)
+    payload.password = hashed_password
+          
+    
+    const user: UserObjectFromDatabase = await User.create(payload)
+    } 
+    catch (error) 
+    {
+    console.log(error)
+    return res.status(403).send({ message: `An unexpected error has occured. Please try again later.`,
+    error: error})
+    }
+
+    return res.status(200).send({ message: `Account created successfully. Welcome to the bank API!`})
+ 
 })
 
 
