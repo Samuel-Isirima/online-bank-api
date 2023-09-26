@@ -110,10 +110,7 @@ authRouter.post('/login', bodyParser.urlencoded(), async(req: Request, res: Resp
         })
 })
 
-authRouter.post('/change-password/generate-token', async(req: Request, res: Response) => 
-{
-   
-})
+
 
 authRouter.post('/change-password', async(req: Request, res: Response) => 
 {
