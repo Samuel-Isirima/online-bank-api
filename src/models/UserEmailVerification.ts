@@ -1,33 +1,29 @@
-//Create an email verification model
 
 import { DataTypes, Model, Optional } from 'sequelize'
 import DatabaseConnection from '../database/DatabaseConnection';
 import bcrypt from 'bcrypt';
 
-interface UserAttributes {
+interface EmailVerificationAttributes {
   id: number;
-  user_email: string;
-  user_id: string;
+  email: string;
   token: string;
-  validity: string;
+  expires_at: Date;
+  valid: boolean;
   created_at?: Date;
   updated_at?: Date;
   deleted_at?: Date;
-  token?: string;
 }
 
-export interface EmailVerificationObjectFromDatabase extends Required<UserAttributes> {}
-export interface EmailVerificationObjectForCreateUser extends Optional<UserAttributes, 'id'> {}
+export interface EmailVerificationObjectFromDatabase extends Required<EmailVerificationAttributes> {}
+export interface EmailVerificationObjectForCreateEmailVerification extends Optional<EmailVerificationAttributes, 'id'> {}
 
-class User extends Model<UserAttributes, EmailVerificationObjectForCreateUser> implements UserAttributes 
+class EmailVerification extends Model<EmailVerificationAttributes, EmailVerificationObjectForCreateEmailVerification> implements EmailVerificationAttributes 
 {
     public id!: number
-    public first_name!: string
-    public last_name!: string
     public email!: string
-    public password!: string
     public token!: string
-  
+    public expires_at!: Date
+    public valid!: boolean
     // timestamps!
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
@@ -38,29 +34,24 @@ class User extends Model<UserAttributes, EmailVerificationObjectForCreateUser> i
 
 
 
-User.init({
+EmailVerification.init({
   id: {
     type: DataTypes.INTEGER.UNSIGNED,
     autoIncrement: true,
     primaryKey: true,
   },
-  first_name: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  last_name: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  email: {
+    email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
+    },
+    expires_at: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    },
+    valid: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    },
   token: {
     type: DataTypes.STRING,
     allowNull: true
@@ -68,7 +59,7 @@ User.init({
 },
 
 {
-tableName: 'users',
+tableName: 'users_email_verification',
 sequelize: DatabaseConnection,
 paranoid: true,
 updatedAt: 'updated_at',
@@ -76,4 +67,4 @@ createdAt: 'created_at'
 },
 )
   
-export default User
+export default EmailVerification
