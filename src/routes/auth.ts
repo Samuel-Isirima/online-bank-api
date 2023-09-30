@@ -5,6 +5,7 @@ import RequestValidator from '../helpers/RequestValidator';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import UserService from '../services/UserService';
+import EmailVerification from '../models/UserEmailVerification';
 const authRouter: Router = Router()
 
 
@@ -218,8 +219,10 @@ authRouter.post('/account/verify', bodyParser.urlencoded(), async(req: Request, 
             } 
     }).catch( err => console.log(err))
   
+    //get the email verification record
+    const token = req.body.token
+    const emailVerification: EmailVerification | null = await EmailVerification.findOne({ where: { token: token } })
 
-    
 
 })
 export default authRouter
