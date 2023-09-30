@@ -97,7 +97,7 @@ authRouter.post('/login', bodyParser.urlencoded(), async(req: Request, res: Resp
                             {
                               expiresIn: '30 days',
                             });
-                        //Now updae the user with the token
+                        //Now update the user with the token
                         User.update({ token: token }, { where: { id: user.id } })
                         return res.status(200).send({ message: `Login successful`, user: {first_name: user.first_name, email: user.email, token: token}})
                     }
