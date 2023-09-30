@@ -36,7 +36,7 @@ authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: R
     {
     var password: string = payload.password
     var saltRounds: number = 10
-    var hashed_password: String = await bcrypt.hash(password, saltRounds)
+    var hashed_password: string = await bcrypt.hash(password, saltRounds)
     payload.password = hashed_password
           
     
@@ -112,7 +112,7 @@ authRouter.post('/login', bodyParser.urlencoded(), async(req: Request, res: Resp
 
 
 
-authRouter.post('/change-password', async(req: Request, res: Response) => 
+authRouter.post('/change-password', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
 {
     const validationRule = {
         "old_password": "required|string|min:8",
@@ -175,35 +175,11 @@ authRouter.post('/change-password', async(req: Request, res: Response) =>
             return res.status(401).send({ message: `Old password incorrect`})
         }
     })
-    const payload = req.body  
-    try 
-    {
-    var password: string = payload.password
-    var saltRounds: number = 10
-    var hashed_password: String = await bcrypt.hash(password, saltRounds)
-    payload.password = hashed_password
-          
-    
-    const user: UserObjectFromDatabase = await User.create(payload)
-    } 
-    catch (error) 
-    {
-    console.log(error)
-    return res.status(403).send({ message: `An unexpected error has occured. Please try again later.`,
-    error: error})
-    }
-
-    return res.status(200).send({ message: `Account created successfully. Welcome to the bank API!`})
- 
-})
-
-
-authRouter.post('/verify-account', async(req: Request, res: Response) => 
-{
    
 })
 
-authRouter.get('/user', async(req: Request, res: Response) =>
+
+authRouter.get('/user', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
 {
     const token: string | undefined = req.header('authorization');
     if(token === undefined)
@@ -221,4 +197,29 @@ authRouter.get('/user', async(req: Request, res: Response) =>
 })
 
 
+
+authRouter.post('/account/verify', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
+{
+    const validationRule = {
+        "email": "required|string|email",
+        "person": "required|string",
+        "token": "required|string"
+    };
+
+    await RequestValidator(req.body, validationRule, {}, (err: any, status: any) => 
+    {
+        if (!status) 
+        {
+            return res.status(412).send({
+                    success: false,
+                    message: 'Validation failed',
+                    data: err
+                });
+            } 
+    }).catch( err => console.log(err))
+  
+
+    
+
+})
 export default authRouter
