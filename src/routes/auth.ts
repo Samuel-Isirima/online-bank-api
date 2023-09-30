@@ -132,6 +132,49 @@ authRouter.post('/change-password', async(req: Request, res: Response) =>
             } 
     }).catch( err => console.log(err))
 
+    //get the user
+    const token: string | undefined = req.header('authorization');
+    if(token === undefined)
+    {
+        return res.status(401).send({ message: `Unauthorized`})
+    }
+    const user: User | null = await UserService.getUserByToken(token)
+    if(user === null)
+    {
+        return res.status(404).send({ message: `Account not found`})
+    }
+
+    //Check that new password and confirm password match
+    const new_password = req.body.password
+    const confirm_password = req.body.confirm_password
+    if(new_password !== confirm_password)
+    {
+        return res.status(401).send({ message: `New password and confirm password do not match`})
+    }
+
+    //Now check that old password is correct
+    const old_password = req.body.old_password
+    const user_password = user.password
+    bcrypt.compare(old_password, user_password, async(err: any, result: any) => 
+    {
+        if (err) 
+        {
+            return res.status(401).send({ message: `An unexpected error has occured. Please try again later.`})
+        }
+        if (result) 
+        {
+            //Now update the password
+            const new_password = req.body.password
+            const saltRounds: number = 10
+            const hashed_password: string = await bcrypt.hash(new_password, saltRounds)
+            User.update({ password: hashed_password }, { where: { id: user.id } })
+            return res.status(200).send({ message: `Password changed successfully`})
+        }
+        else
+        {
+            return res.status(401).send({ message: `Old password incorrect`})
+        }
+    })
     const payload = req.body  
     try 
     {
