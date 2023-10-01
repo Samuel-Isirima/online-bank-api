@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import UserService from '../services/UserService';
 import UserEmailVerification from '../models/UserEmailVerification';
 import { UUIDV4 } from 'sequelize';
+import UserPasswordRecovery from '../models/UserPasswordRecovery';
 const authRouter: Router = Router()
 
 
@@ -164,7 +165,7 @@ authRouter.post('/change-password', bodyParser.urlencoded(), async(req: Request,
     const confirm_password = req.body.confirm_password
     if(new_password !== confirm_password)
     {
-        return res.status(401).send({ message: `New password and confirm password do not match`})
+        return res.status(401).send({ message: `Passwords do not match`})
     }
 
     //Now check that old password is correct
@@ -303,10 +304,118 @@ authRouter.post('/account/verify/request-token', bodyParser.urlencoded(), async(
     }
     //Invalidate all previous email verification records
     UserEmailVerification.update({ valid: false }, { where: { email: payload.email } })
-    
+
     //Now create the email verification record
     UserEmailVerification.create({ email: payload.email, token: token, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1), valid: true})
     return res.status(200).send({ message: `A verification link has been sent to your email address`})
+
+})
+
+
+
+authRouter.post('/password-recovery/reset-password', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
+{
+    const validationRule = {
+        "token": "required|string|min:8",
+        "password": "required|string|min:8",
+        "confirm_password": "required|string|min:8",
+    };
+
+    const validationResult: any = await RequestValidator(req.body, validationRule, {})
+    .catch((err) => {
+    console.error(err)
+    })
+
+    if(validationResult.status === false)
+    {
+    const errorMessages: string[] = extractValidationErrorMessages(validationResult.errors)
+    return res.status(401).send({ message: `Validation failed. ${errorMessages}`})
+    }
+
+    const payload = req.body
+
+    const token: string = payload.token
+
+    //Get the user password recovery record
+    const userPasswordRecovery: UserPasswordRecovery | null = await UserPasswordRecovery.findOne({ where: { token: token } })
+    if(userPasswordRecovery === null)
+    {
+        return res.status(404).send({ message: `The password recovery link is invalid`})
+    }
+
+    //Check that the token has not expired
+    const expires_at = userPasswordRecovery.expires_at
+    const now = new Date()
+    if(now > expires_at)
+    {
+        return res.status(401).send({ message: `Token has expired`})
+    }
+
+    //Check that the token is valid
+    const valid = userPasswordRecovery.valid
+    if(valid === false)
+    {
+        return res.status(401).send({ message: `Token is not valid`})
+    }
+    
+    //Check that new password and confirm password match
+    const password = req.body.password
+    const confirm_password = req.body.confirm_password
+    if(password !== confirm_password)
+    {
+        return res.status(401).send({ message: `Passwords do not match`})
+    }
+
+    //Now update the password
+    const saltRounds: number = 10
+    const hashed_password: string = await bcrypt.hash(password, saltRounds)
+    User.update({ password: hashed_password }, { where: { email: userPasswordRecovery.email } })
+
+    //Now update the password recovery record
+    UserPasswordRecovery.update({ valid: false }, { where: { id: userPasswordRecovery.id } })
+    return res.status(200).send({ message: `Password reset successfully`})
+
+   
+})
+
+
+authRouter.post('/password-recovery/request-token', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
+{
+    const validationRule = {
+        "email": "required|string|email",
+    };
+
+    const validationResult: any = await RequestValidator(req.body, validationRule, {})
+    .catch((err) => {
+    console.error(err)
+    })
+
+    if(validationResult.status === false)
+    {
+    const errorMessages: string[] = extractValidationErrorMessages(validationResult.errors)
+    return res.status(401).send({ message: `Validation failed. ${errorMessages}`})
+    }
+  
+    //generate random string token for password recovery
+    const token: string = generateRandomString(52)
+
+    const payload = req.body
+
+    //Check if user exists
+    const user: User | null = await User.findOne({ where: { email: payload.email } })
+    if(user === null)
+    {
+        return res.status(404).send({ message: `An account with email ${payload.email} was not found`})
+    }
+
+ 
+    //Invalidate all previous password recovery records
+    UserPasswordRecovery.update({ valid: false }, { where: { email: payload.email } })
+
+    //Now create the email verification record
+    UserPasswordRecovery.create({ email: payload.email, token: token, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1), valid: true})
+    .catch( err => console.log(err))
+    return res.status(200).send({ message: `A recovery link has been sent to your email address`})
 
 })
 
