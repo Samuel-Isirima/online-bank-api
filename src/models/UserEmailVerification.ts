@@ -1,9 +1,9 @@
 
 import { DataTypes, Model, Optional } from 'sequelize'
-import DatabaseConnection from '../database/DatabaseConnection';
+import {DatabaseConnection} from '../database/DatabaseConnection';
 import bcrypt from 'bcrypt';
 
-interface EmailVerificationAttributes {
+interface UserEmailVerificationAttributes {
   id: number;
   email: string;
   token: string;
@@ -14,10 +14,10 @@ interface EmailVerificationAttributes {
   deleted_at?: Date;
 }
 
-export interface EmailVerificationObjectFromDatabase extends Required<EmailVerificationAttributes> {}
-export interface EmailVerificationObjectForCreateEmailVerification extends Optional<EmailVerificationAttributes, 'id'> {}
+export interface UserEmailVerificationObjectFromDatabase extends Required<UserEmailVerificationAttributes> {}
+export interface UserEmailVerificationObjectForCreateUserEmailVerification extends Optional<UserEmailVerificationAttributes, 'id'> {}
 
-class EmailVerification extends Model<EmailVerificationAttributes, EmailVerificationObjectForCreateEmailVerification> implements EmailVerificationAttributes 
+class UserEmailVerification extends Model<UserEmailVerificationAttributes, UserEmailVerificationObjectForCreateUserEmailVerification> implements UserEmailVerificationAttributes 
 {
     public id!: number
     public email!: string
@@ -34,7 +34,7 @@ class EmailVerification extends Model<EmailVerificationAttributes, EmailVerifica
 
 
 
-EmailVerification.init({
+UserEmailVerification.init({
   id: {
     type: DataTypes.INTEGER.UNSIGNED,
     autoIncrement: true,
@@ -65,6 +65,7 @@ paranoid: true,
 updatedAt: 'updated_at',
 createdAt: 'created_at'
 },
+
 )
   
-export default EmailVerification
+export default UserEmailVerification

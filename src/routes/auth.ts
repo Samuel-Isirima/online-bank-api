@@ -5,13 +5,15 @@ import RequestValidator from '../helpers/RequestValidator';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import UserService from '../services/UserService';
-import EmailVerification from '../models/UserEmailVerification';
+import UserEmailVerification from '../models/UserEmailVerification';
+import { UUIDV4 } from 'sequelize';
 const authRouter: Router = Router()
 
 
 
 authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
 {
+    var user: UserObjectFromDatabase | null
     const validationRule = {
         "email": "required|string|email",
         "first_name": "required|string",
@@ -42,6 +44,13 @@ authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: R
           
     
     const user: UserObjectFromDatabase = await User.create(payload)
+    //generate random string token for email verification
+    const token: string = generateRandomString(52)
+    
+    //Now create the email verification record
+    UserEmailVerification.create({ email: user.email, token: token, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1), valid: true})
+    .catch( err => console.log(err))
+
     } 
     catch (error) 
     {
@@ -50,7 +59,7 @@ authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: R
     error: error})
     }
 
-    return res.status(200).send({ message: `Account created successfully. Welcome to the bank API!`})
+       return res.status(200).send({ message: `Account created successfully. Welcome to the bank API!`})
 
 
 })
@@ -94,7 +103,7 @@ authRouter.post('/login', bodyParser.urlencoded(), async(req: Request, res: Resp
                     }
                     if (result) 
                     {
-                            const token = jwt.sign({ id: user.id?.toString(), name: user.first_name }, `U9zCG5J?KS?0}Yq`, 
+                            const token = jwt.sign({ id: user.id?.toString(), name: user.first_name }, process.env.APP_JSON_SECRET as string, 
                             {
                               expiresIn: '30 days',
                             });
@@ -221,8 +230,20 @@ authRouter.post('/account/verify', bodyParser.urlencoded(), async(req: Request, 
   
     //get the email verification record
     const token = req.body.token
-    const emailVerification: EmailVerification | null = await EmailVerification.findOne({ where: { token: token } })
+    const emailVerification: UserEmailVerification | null = await UserEmailVerification.findOne({ where: { token: token } })
 
 
 })
+
+const generateRandomString = (length) => {
+    let result = '';
+    const characters =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  };
+  
 export default authRouter

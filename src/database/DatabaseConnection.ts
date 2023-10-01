@@ -1,5 +1,4 @@
 import { Dialect, Sequelize } from 'sequelize'
-import database_init from './DatabaseInit'
 
 const database_name = process.env.DATABASE as string
 const database_user = process.env.DATABASE_USER as string
@@ -21,19 +20,19 @@ const sequelize = new Sequelize("", database_user, database_password, {
 
   create_database()
 
-const DatabaseConnection = new Sequelize(database_name, database_user, database_password, {
-  host: database_host,
-  dialect: database_driver
-})
+  const DatabaseConnection: Sequelize = new Sequelize(database_name, database_user, database_password, {
+    host: database_host,
+    dialect: database_driver
+  })
 
-DatabaseConnection.authenticate().then(() => 
-{
-    console.log('Database connection has been established successfully.')
-    database_init()
-})
-.catch((error) => 
-{
-    console.error('Unable to connect to the database: ', error)
-});
+  async function authenticateDatabase() 
+  {
+    try {
+      await sequelize.authenticate();
+      console.log('Database connection has been established successfully.');
+    } catch (error) {
+      console.error('Unable to connect to the database:', error);
+    }
+  }
 
-export default DatabaseConnection
+export { DatabaseConnection, authenticateDatabase }
