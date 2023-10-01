@@ -257,6 +257,8 @@ authRouter.post('/account/verify', bodyParser.urlencoded(), async(req: Request, 
 
     //Now update the email verification record
     UserEmailVerification.update({ valid: false }, { where: { id: emailVerification.id } })
+    //update the user email verified at
+    User.update({ email_verified_at: new Date() }, { where: { email: emailVerification.email } })
     return res.status(200).send({ message: `Email verified successfully`})
 
 })
@@ -286,11 +288,25 @@ authRouter.post('/account/verify/request-token', bodyParser.urlencoded(), async(
     const token: string = generateRandomString(52)
 
     const payload = req.body
+
+    //Check if user exists
+    const user: User | null = await User.findOne({ where: { email: payload.email } })
+    if(user === null)
+    {
+        return res.status(404).send({ message: `An account with email ${payload.email} was not found`})
+    }
+
+    //Check if user has already been verified
+    if(!!user.email_verified_at)
+    {
+        return res.status(401).send({ message: `Account has already been verified`})
+    }
+    //Invalidate all previous email verification records
+    UserEmailVerification.update({ valid: false }, { where: { email: payload.email } })
     
     //Now create the email verification record
     UserEmailVerification.create({ email: payload.email, token: token, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1), valid: true})
     return res.status(200).send({ message: `A verification link has been sent to your email address`})
-
 
 })
 
