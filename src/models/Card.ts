@@ -1,6 +1,6 @@
 
 import { DataTypes, Model, Optional } from 'sequelize'
-import DatabaseConnection from '../database/DatabaseConnection';
+import { DatabaseConnection } from '../database/DatabaseConnection';
 import bcrypt from 'bcrypt';
 
 interface CardAttributes {
