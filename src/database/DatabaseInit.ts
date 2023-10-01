@@ -5,8 +5,8 @@ import { authenticateDatabase } from './DatabaseConnection';
 const isDev = process.env.NODE_ENV === 'development'
 
 const database_init = () => {
-  User.sync({alter: isDev})
-  UserEmailVerification.sync({alter: isDev})
+  //User.sync({alter: isDev})
+  //UserEmailVerification.sync({alter: isDev})
 }
 console.log('Database connection has been established successfully.');
 authenticateDatabase().then(() => 

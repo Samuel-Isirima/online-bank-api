@@ -29,9 +29,8 @@ authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: R
 
     if(validationResult.status === false)
     {
-    console.log(validationResult.errors)
     const errorMessages: string[] = extractValidationErrorMessages(validationResult.errors)
-    return res.status(401).send({ message: `Validation failed. Error: ${errorMessages}`})
+    return res.status(401).send({ message: `Validation failed. ${errorMessages}`})
     }
 
     const payload = req.body  
@@ -42,7 +41,13 @@ authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: R
     var hashed_password: string = await bcrypt.hash(password, saltRounds)
     payload.password = hashed_password
           
-    
+    //check if user email already exists
+    var user_ = await User.findOne({ where: { email: payload.email } })
+    if(user_ !== null)
+    {
+        return res.status(401).send({ message: `User with email ${payload.email} already exists`})
+    }
+
     const user: UserObjectFromDatabase = await User.create(payload)
     //generate random string token for email verification
     const token: string = generateRandomString(52)
@@ -71,12 +76,17 @@ authRouter.post('/login', bodyParser.urlencoded(), async(req: Request, res: Resp
         "password": "required|string|min:8",
     };
 
-    const validationStatus = await RequestValidator(req.body, validationRule, {})
+    const validationResult: any = await RequestValidator(req.body, validationRule, {})
     .catch((err) => {
-      console.error(err);
-      // Handle any errors that occur during validation
-      // You can choose to reject the promise or handle the error here.
-    });
+    console.error(err)
+    })
+
+    if(validationResult.status === false)
+    {
+    const errorMessages: string[] = extractValidationErrorMessages(validationResult.errors)
+    return res.status(401).send({ message: `Validation failed. ${errorMessages}`})
+    }
+
         
         //Now try to log user in
         const payload = req.body
@@ -125,12 +135,17 @@ authRouter.post('/change-password', bodyParser.urlencoded(), async(req: Request,
         "confirm_password": "required|string|min:8",
     };
 
-    const validationStatus = await RequestValidator(req.body, validationRule, {})
+    const validationResult: any = await RequestValidator(req.body, validationRule, {})
     .catch((err) => {
-      console.error(err);
-      // Handle any errors that occur during validation
-      // You can choose to reject the promise or handle the error here.
-    });
+    console.error(err)
+    })
+
+    if(validationResult.status === false)
+    {
+    const errorMessages: string[] = extractValidationErrorMessages(validationResult.errors)
+    return res.status(401).send({ message: `Validation failed. ${errorMessages}`})
+    }
+
 
     //get the user
     const token: string | undefined = req.header('authorization');
@@ -202,17 +217,19 @@ authRouter.post('/account/verify', bodyParser.urlencoded(), async(req: Request, 
 {
     const validationRule = {
         "email": "required|string|email",
-        "person": "required|string",
         "token": "required|string"
     };
 
-    const validationStatus = await RequestValidator(req.body, validationRule, {})
+    const validationResult: any = await RequestValidator(req.body, validationRule, {})
     .catch((err) => {
-      console.error(err);
-      // Handle any errors that occur during validation
-      // You can choose to reject the promise or handle the error here.
-    });
-  
+    console.error(err)
+    })
+
+    if(validationResult.status === false)
+    {
+    const errorMessages: string[] = extractValidationErrorMessages(validationResult.errors)
+    return res.status(401).send({ message: `Validation failed. ${errorMessages}`})
+    }
   
     //get the email verification record
     const token = req.body.token
@@ -228,17 +245,17 @@ authRouter.post('/account/verify', bodyParser.urlencoded(), async(req: Request, 
     const now = new Date()
     if(now > expires_at)
     {
-        //return res.status(401).send({ message: `Token has expired`})
+        return res.status(401).send({ message: `Token has expired`})
     }
 
     //Check that the token is valid
     const valid = emailVerification.valid
     if(valid === false)
     {
-        //return res.status(401).send({ message: `Token is not valid`})
+        return res.status(401).send({ message: `Token is not valid`})
     }
 
-    //return res.status(200).send({ message: `Email verified successfully`})
+    return res.status(200).send({ message: `Email verified successfully`})
 
 })
 
@@ -256,7 +273,7 @@ const generateRandomString = (length) => {
 
 function extractValidationErrorMessages(errors: any): string[] {
 const errorMessages: string[] = [];
-
+errors = errors.errors
 for (const field in errors) {
     if (Array.isArray(errors[field])) {
     errorMessages.push(...errors[field]);
