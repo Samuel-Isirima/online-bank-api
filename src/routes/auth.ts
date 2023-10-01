@@ -255,9 +255,47 @@ authRouter.post('/account/verify', bodyParser.urlencoded(), async(req: Request, 
         return res.status(401).send({ message: `Token is not valid`})
     }
 
+    //Now update the email verification record
+    UserEmailVerification.update({ valid: false }, { where: { id: emailVerification.id } })
     return res.status(200).send({ message: `Email verified successfully`})
 
 })
+
+
+
+
+
+authRouter.post('/account/verify/request-token', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
+{
+    const validationRule = {
+        "email": "required|string|email",
+    };
+
+    const validationResult: any = await RequestValidator(req.body, validationRule, {})
+    .catch((err) => {
+    console.error(err)
+    })
+
+    if(validationResult.status === false)
+    {
+    const errorMessages: string[] = extractValidationErrorMessages(validationResult.errors)
+    return res.status(401).send({ message: `Validation failed. ${errorMessages}`})
+    }
+  
+    //generate random string token for email verification
+    const token: string = generateRandomString(52)
+
+    const payload = req.body
+    
+    //Now create the email verification record
+    UserEmailVerification.create({ email: payload.email, token: token, expires_at: new Date(Date.now() + 24 * 60 * 60 * 1), valid: true})
+    return res.status(200).send({ message: `A verification link has been sent to your email address`})
+
+
+})
+
+
+
 
 const generateRandomString = (length) => {
     let result = '';
