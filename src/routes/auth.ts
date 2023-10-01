@@ -22,17 +22,17 @@ authRouter.post('/register', bodyParser.urlencoded(), async(req: Request, res: R
         "confirm_password": "required|string|min:8",
     };
 
-    await RequestValidator(req.body, validationRule, {}, (err: any, status: any) => 
+    const validationResult: any = await RequestValidator(req.body, validationRule, {})
+    .catch((err) => {
+    console.error(err)
+    })
+
+    if(validationResult.status === false)
     {
-        if (!status) 
-        {
-            return res.status(412).send({
-                    success: false,
-                    message: 'Validation failed',
-                    data: err
-                });
-            } 
-    }).catch( err => console.log(err))
+    console.log(validationResult.errors)
+    const errorMessages: string[] = extractValidationErrorMessages(validationResult.errors)
+    return res.status(401).send({ message: `Validation failed. Error: ${errorMessages}`})
+    }
 
     const payload = req.body  
     try 
@@ -71,17 +71,12 @@ authRouter.post('/login', bodyParser.urlencoded(), async(req: Request, res: Resp
         "password": "required|string|min:8",
     };
 
-    await RequestValidator(req.body, validationRule, {}, (err: any, status: any) => 
-    {
-        if (!status) 
-        {
-            return res.status(412).send({
-                    success: false,
-                    message: 'Login unsuccessful',
-                    data: err
-                });
-        }
-    }).catch( err => console.log(err))
+    const validationStatus = await RequestValidator(req.body, validationRule, {})
+    .catch((err) => {
+      console.error(err);
+      // Handle any errors that occur during validation
+      // You can choose to reject the promise or handle the error here.
+    });
         
         //Now try to log user in
         const payload = req.body
@@ -130,17 +125,12 @@ authRouter.post('/change-password', bodyParser.urlencoded(), async(req: Request,
         "confirm_password": "required|string|min:8",
     };
 
-    await RequestValidator(req.body, validationRule, {}, (err: any, status: any) => 
-    {
-        if (!status) 
-        {
-            return res.status(412).send({
-                    success: false,
-                    message: 'Validation failed',
-                    data: err
-                });
-            } 
-    }).catch( err => console.log(err))
+    const validationStatus = await RequestValidator(req.body, validationRule, {})
+    .catch((err) => {
+      console.error(err);
+      // Handle any errors that occur during validation
+      // You can choose to reject the promise or handle the error here.
+    });
 
     //get the user
     const token: string | undefined = req.header('authorization');
@@ -216,22 +206,39 @@ authRouter.post('/account/verify', bodyParser.urlencoded(), async(req: Request, 
         "token": "required|string"
     };
 
-    await RequestValidator(req.body, validationRule, {}, (err: any, status: any) => 
-    {
-        if (!status) 
-        {
-            return res.status(412).send({
-                    success: false,
-                    message: 'Validation failed',
-                    data: err
-                });
-            } 
-    }).catch( err => console.log(err))
+    const validationStatus = await RequestValidator(req.body, validationRule, {})
+    .catch((err) => {
+      console.error(err);
+      // Handle any errors that occur during validation
+      // You can choose to reject the promise or handle the error here.
+    });
+  
   
     //get the email verification record
     const token = req.body.token
-    const emailVerification: UserEmailVerification | null = await UserEmailVerification.findOne({ where: { token: token } })
+    const emailVerification: UserEmailVerification | null = await UserEmailVerification.findOne({ where: { token: token, email: req.body.email } })
 
+    if(emailVerification === null)
+    {
+        return res.status(404).send({ message: `Email verification record not found`})
+    }
+
+    //Check that the token has not expired
+    const expires_at = emailVerification.expires_at
+    const now = new Date()
+    if(now > expires_at)
+    {
+        //return res.status(401).send({ message: `Token has expired`})
+    }
+
+    //Check that the token is valid
+    const valid = emailVerification.valid
+    if(valid === false)
+    {
+        //return res.status(401).send({ message: `Token is not valid`})
+    }
+
+    //return res.status(200).send({ message: `Email verified successfully`})
 
 })
 
@@ -244,6 +251,19 @@ const generateRandomString = (length) => {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
-  };
-  
+  }
+
+
+function extractValidationErrorMessages(errors: any): string[] {
+const errorMessages: string[] = [];
+
+for (const field in errors) {
+    if (Array.isArray(errors[field])) {
+    errorMessages.push(...errors[field]);
+    }
+}
+
+return errorMessages;
+}
+
 export default authRouter

@@ -22,7 +22,8 @@ const sequelize = new Sequelize("", database_user, database_password, {
 
   const DatabaseConnection: Sequelize = new Sequelize(database_name, database_user, database_password, {
     host: database_host,
-    dialect: database_driver
+    dialect: database_driver,
+    logging: false
   })
 
   async function authenticateDatabase() 
