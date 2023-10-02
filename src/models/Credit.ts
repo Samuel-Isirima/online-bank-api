@@ -2,67 +2,55 @@
 import { DataTypes, Model, Optional } from 'sequelize'
 import { DatabaseConnection } from '../database/DatabaseConnection';
 import bcrypt from 'bcrypt';
+import { type } from 'os';
 
-interface CardAttributes {
+interface CreditAttributes {
     id: number;
     user_id: number;
-    card_number: string;
-    card_holder: string;
-    card_expiry: string;
-    card_cvv: string;
-    card_pin: string;
-    card_type: string;
-    card_status: string;
-    card_balance: string;
-    card_currency: string;
-    card_country: string;
-    card_city: string;
-    card_state: string;
-    card_zip: string;
-    card_address: string;
-    card_phone: string;
-    card_email: string;
+    amount: number;
+    balance_before: number;
+    balance_after: number;
+    status: string;
+    type: string;       //Intra: acccount within app, external
+    source_account_id?: number;  //Forr intra 
+    source_account_name?: string;
+    source_account_bank?: string;
+    source_account_number?: number;
+
     created_at?: Date;
     updated_at?: Date;
     deleted_at?: Date;
 
 }
 
-export interface CardObjectFromDatabase extends Required<CardAttributes> {}
-export interface CardObjectForCreateCard extends Optional<CardAttributes, 'id'> {}
+export interface CreditObjectFromDatabase extends Required<CreditAttributes> {}
+export interface CreditObjectForCreateCredit extends Optional<CreditAttributes,
+ 'id' | 'source_account_bank'| 'source_account_id' | 'source_account_name' | 'source_account_number'> {}
 
-class Card extends Model<CardAttributes, CardObjectForCreateCard> implements CardAttributes 
+class Credit extends Model<CreditAttributes, CreditObjectForCreateCredit> implements CreditAttributes 
 {
+//correctly implement all the fields as defined in the interface
     public id!: number
     public user_id!: number
-    public card_number!: string
-    public card_holder!: string
-    public card_expiry!: string
-    public card_cvv!: string
-    public card_pin!: string
-    public card_type!: string
-    public card_status!: string
-    public card_balance!: string
-    public card_currency!: string
-    public card_country!: string
-    public card_city!: string
-    public card_state!: string
-    public card_zip!: string
-    public card_address!: string
-    public card_phone!: string
-    public card_email!: string
-    
+    public amount!: number
+    public balance_before!: number
+    public balance_after!: number
+    public status!: string
+    public type!: string
+    public source_account_id!: number
+    public source_account_name!: string
+    public source_account_bank!: string
+    public source_account_number!: number
     // timestamps!
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
     public readonly deleted_at!: Date;
-
     
 }
 
 
 
-Card.init({
+Credit.init({
   id: {
     type: DataTypes.INTEGER.UNSIGNED,
     autoIncrement: true,
@@ -70,86 +58,50 @@ Card.init({
   },
    //implement all the fields as defined in the interface
     user_id: {
-    type: DataTypes.INTEGER.UNSIGNED,
-    allowNull: false,
-    },
-    card_number: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_holder: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_expiry: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_cvv: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_pin: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_type: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_status: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_balance: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_currency: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_country: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_city: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_state: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_zip: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_address: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_phone: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    card_email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    },
-    created_at: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    },
-    updated_at: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    },
-    deleted_at: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    },
-},
+     type: DataTypes.INTEGER.UNSIGNED,
+     allowNull: false,
+     },
+     amount: {
+     type: DataTypes.DECIMAL,
+     allowNull: false,
+     defaultValue: 0.00,
+     },
+     balance_before: {
+     type: DataTypes.DECIMAL,
+     allowNull: false,
+     defaultValue: 0.00,
+     },
+     balance_after: {
+     type: DataTypes.DECIMAL,
+     allowNull: false,
+     defaultValue: 0.00,
+     },
+     status: {
+     type: DataTypes.STRING,
+     allowNull: false,
+     defaultValue: 'pending',
+     },
+     type: {
+     type: DataTypes.STRING,
+     allowNull: false,
+     defaultValue: 'intra',
+     },
+     source_account_id: {
+     type: DataTypes.INTEGER.UNSIGNED,
+     allowNull: true,
+     },
+     source_account_name: {
+     type: DataTypes.STRING,
+     allowNull: true,
+     },
+     source_account_bank: {
+     type: DataTypes.STRING,
+     allowNull: true,
+     },
+     source_account_number: {
+     type: DataTypes.INTEGER.UNSIGNED,
+     allowNull: true,
+     }},
 
 {
 tableName: 'card',
@@ -160,4 +112,4 @@ createdAt: 'created_at'
 },
 )
   
-export default Card
+export default Credit
