@@ -6,7 +6,7 @@ import { type } from 'os';
 
 interface DebitAttributes {
     id: number;
-    user_id: number;
+    user_account_id: number;
     amount: number;
     balance_before: number;
     balance_after: number;
@@ -31,7 +31,7 @@ class Debit extends Model<DebitAttributes, DebitObjectForCreateDebit> implements
 {
 //correctly implement all the fields as defined in the interface
     public id!: number
-    public user_id!: number
+    public user_account_id!: number
     public amount!: number
     public balance_before!: number
     public balance_after!: number
@@ -57,7 +57,7 @@ Debit.init({
     primaryKey: true,
   },
 //implement all the fields as defined in the interface
-    user_id: {
+    user_account_id: {
     type: DataTypes.INTEGER.UNSIGNED,
     allowNull: false,
     },
