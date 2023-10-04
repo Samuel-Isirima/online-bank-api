@@ -8,6 +8,7 @@ interface TransactionAttributes {
     id: number;
     user_account_id: number;
     type: string;
+    reference: string;
     credit_record_id?: number;
     debit_record_id?: number;
     created_at?: Date;
@@ -25,6 +26,7 @@ class Transaction extends Model<TransactionAttributes, TransactionObjectForCreat
     public id!: number
     public user_account_id!: number
     public type!: string
+    public reference!: string
     public credit_record_id!: number
     public debit_record_id!: number
     // timestamps!
@@ -48,6 +50,10 @@ Transaction.init({
     allowNull: false,
     },
     type: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    },
+    reference: {
     type: DataTypes.STRING,
     allowNull: false,
     },

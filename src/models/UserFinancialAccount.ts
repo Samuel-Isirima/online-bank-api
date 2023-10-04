@@ -8,7 +8,9 @@ interface UserFinancialAccountAttributes {
   user_id: number;
   account_number: string;
   account_balance: number;
-  activated: boolean;
+  currency: string;
+  status: boolean;
+  tag?: string;
   created_at?: Date;
   updated_at?: Date;
   deleted_at?: Date;
@@ -23,7 +25,9 @@ class UserFinancialAccount extends Model<UserFinancialAccountAttributes, UserFin
     public user_id!: number
     public account_number!: string
     public account_balance!: number
-    public activated!: boolean
+    public currency!: string
+    public status!: boolean
+    public tag!: string
     // timestamps!
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
@@ -53,9 +57,17 @@ UserFinancialAccount.init({
     allowNull: false,
     defaultValue: 0.00,
     },
-    activated: {
+    currency: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    },
+    status: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
+    },
+    tag: {
+    type: DataTypes.STRING,
+    allowNull: true,
     },
 },
 
