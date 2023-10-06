@@ -5,6 +5,7 @@ import RequestValidator from '../helpers/RequestValidator';
 import bcrypt from 'bcrypt';
 import Transaction from '../models/Transaction';
 import UserFinancialAccount from '../models/UserFinancialAccount';
+import Debit from '../models/Debit';
 const transactionRouter: Router = Router()
 
 
@@ -33,6 +34,7 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
 
     //Deconstruct the payload
     const { amount, sender_account_id, recipient_account_number, recipient_account_tag } = payload
+    const transaction_amount = parseFloat(amount)
 
     //Confirm that the sender account exists
     const senderAccount = await UserFinancialAccount.findOne({ where: { id: sender_account_id } })
@@ -46,7 +48,50 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
     {
         return res.status(401).send({ message: `Transaction failed. Source account is inactive.`})
     }
-   
+
+    //Confirm that the sender account has sufficient balance
+    if(senderAccount.account_balance < transaction_amount)
+    {
+        return res.status(401).send({ message: `Transaction failed. Insufficient balance.`})
+    }
+
+    //confirm that the recipient account exists
+    let recipientAccount: UserFinancialAccount | null = null
+    if(recipient_account_number)
+    {
+        recipientAccount = await UserFinancialAccount.findOne({ where: { account_number: recipient_account_number } })
+    }
+    else if(recipient_account_tag)
+    {
+        recipientAccount = await UserFinancialAccount.findOne({ where: { tag: recipient_account_tag } })
+    }
+    else
+    {
+        return res.status(401).send({ message: `Transaction failed. Invalid recipient account.`})
+    }
+
+    if(!recipientAccount)
+    {
+        return res.status(401).send({ message: `Transaction failed. Invalid recipient account.`})
+    }
+
+    //Check if the accounts have the same currency
+    if(senderAccount.currency !== recipientAccount.currency)
+    {
+        return res.status(401).send({ message: `Transaction failed. Accounts have different currencies. Please use our currency exchange service.`})
+    }
+
+    //Initiate the debit transaction
+    const debitTransaction = await Debit.create({
+        user_account_id: senderAccount.user_id,
+        amount: transaction_amount,
+        balance_before: senderAccount.account_balance,
+        balance_after: senderAccount.account_balance - amount,
+        status: 'pending',
+        type: 'INTRA',
+        destination_account_id: recipientAccount.id,
+        destination_account_name: recipientAccount.tag,
+    })
 })
 
 
