@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import Transaction from '../models/Transaction';
 import UserFinancialAccount from '../models/UserFinancialAccount';
 import Debit from '../models/Debit';
+import Credit from '../models/Credit';
 const transactionRouter: Router = Router()
 
 
@@ -91,6 +92,15 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
         type: 'INTRA',
         destination_account_id: recipientAccount.id,
         destination_account_name: recipientAccount.tag,
+    })
+
+
+    //Now update sender account
+    UserFinancialAccount.update({account_balance: senderAccount.account_balance - transaction_amount}, { where: { id: senderAccount.id } })
+
+    //Now create the credit record for the recipient
+    const creditTransaction = await Credit.create({
+        
     })
 })
 
