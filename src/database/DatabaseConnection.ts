@@ -36,4 +36,4 @@ const sequelize = new Sequelize("", database_user, database_password, {
     }
   }
 
-export { DatabaseConnection, authenticateDatabase }
+export { DatabaseConnection, authenticateDatabase, sequelize }

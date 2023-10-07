@@ -7,6 +7,7 @@ import Transaction from '../models/Transaction';
 import UserFinancialAccount from '../models/UserFinancialAccount';
 import Debit from '../models/Debit';
 import Credit from '../models/Credit';
+import { sequelize } from '../database/DatabaseConnection';
 const transactionRouter: Router = Router()
 
 
@@ -82,7 +83,14 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
         return res.status(401).send({ message: `Transaction failed. Accounts have different currencies. Please use our currency exchange service.`})
     }
 
-    //Initiate the debit transaction
+    var transaction: any = await sequelize.transaction()
+
+
+    //Initiate the transaction
+
+    try
+    {
+
     const debitTransaction = await Debit.create({
         user_account_id: senderAccount.user_id,
         amount: transaction_amount,
@@ -92,16 +100,38 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
         type: 'INTRA',
         destination_account_id: recipientAccount.id,
         destination_account_name: recipientAccount.tag,
-    })
+    }, { transaction: transaction })
 
 
     //Now update sender account
-    UserFinancialAccount.update({account_balance: senderAccount.account_balance - transaction_amount}, { where: { id: senderAccount.id } })
+    await UserFinancialAccount.update({account_balance: senderAccount.account_balance - transaction_amount}, { where: { id: senderAccount.id }, transaction: transaction })
 
     //Now create the credit record for the recipient
     const creditTransaction = await Credit.create({
-        
-    })
+        user_account_id: recipientAccount.user_id,
+        amount: transaction_amount,
+        balance_before: recipientAccount.account_balance,
+        balance_after: recipientAccount.account_balance + transaction_amount,
+        status: 'pending',
+        type: 'INTRA',
+        source_account_id: senderAccount.id,
+        source_account_name: senderAccount.tag,
+    }, { transaction: transaction })
+
+    //Now update recipient account
+    await UserFinancialAccount.update({account_balance: recipientAccount.account_balance + transaction_amount}, { where: { id: recipientAccount.id }, transaction: transaction })
+    
+    await transaction.commit()
+    
+    }
+    catch(err)
+    {
+        await transaction.rollback()
+        return res.status(401).send({ message: `Transaction failed. ${err.message}`})
+    }
+    
+
+   
 })
 
 
