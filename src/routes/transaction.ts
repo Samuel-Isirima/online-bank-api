@@ -124,7 +124,7 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
     await transaction.commit()
     
     }
-    catch(err)
+    catch(err: any)
     {
         await transaction.rollback()
         return res.status(401).send({ message: `Transaction failed. ${err.message}`})
@@ -135,13 +135,13 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
 })
 
 
-
 transactionRouter.post('/send/inter', bodyParser.urlencoded(), async(req: Request, res: Response, next: NextFunction) => 
 {
     const validationRule = {
         "amount": "required|number|min:20",
-        "recipient_account_number": "required_without:recipient_account_tag|string",
-        "recipient_account_tag": "required_without:recipient_account_number|string",
+        "recipient_account_number": "required|string",
+        "recipient_account_bank": "required|string",
+        "recipient_account_name": "required|string",
     };
 
     const validationResult: any = await RequestValidator(req.body, validationRule, {})
@@ -156,6 +156,100 @@ transactionRouter.post('/send/inter', bodyParser.urlencoded(), async(req: Reques
     }
 
     const payload = req.body  
+
+    //Deconstruct the payload
+    const { amount, sender_account_id, recipient_account_number, recipient_account_name, recipient_account_bank } = payload
+    const transaction_amount = parseFloat(amount)
+
+    //Confirm that the sender account exists
+    const senderAccount = await UserFinancialAccount.findOne({ where: { id: sender_account_id } })
+    if(!senderAccount)
+    {
+        return res.status(401).send({ message: `Transaction failed. Source account does not exist.`})
+    }
+
+    //Confirm that the sender account is active
+    if(senderAccount.status === false)
+    {
+        return res.status(401).send({ message: `Transaction failed. Source account is inactive.`})
+    }
+
+    //Confirm that the sender account has sufficient balance
+    if(senderAccount.account_balance < transaction_amount)
+    {
+        return res.status(401).send({ message: `Transaction failed. Insufficient balance.`})
+    }
+
+    //confirm that the recipient account exists
+    let recipientAccount: UserFinancialAccount | null = null
+    if(recipient_account_number)
+    {
+        recipientAccount = await UserFinancialAccount.findOne({ where: { account_number: recipient_account_number } })
+    }
+    else
+    {
+        return res.status(401).send({ message: `Transaction failed. Invalid recipient account.`})
+    }
+
+    if(!recipientAccount)
+    {
+        return res.status(401).send({ message: `Transaction failed. Invalid recipient account.`})
+    }
+
+    //Check if the accounts have the same currency
+    if(senderAccount.currency !== recipientAccount.currency)
+    {
+        return res.status(401).send({ message: `Transaction failed. Accounts have different currencies. Please use our currency exchange service.`})
+    }
+
+    var transaction: any = await sequelize.transaction()
+
+
+    //Initiate the transaction
+
+    try
+    {
+
+    const debitTransaction = await Debit.create({
+        user_account_id: senderAccount.user_id,
+        amount: transaction_amount,
+        balance_before: senderAccount.account_balance,
+        balance_after: senderAccount.account_balance - amount,
+        status: 'pending',
+        type: 'INTRA',
+        destination_account_id: recipientAccount.id,
+        destination_account_name: recipientAccount.tag,
+    }, { transaction: transaction })
+
+
+    //Now update sender account
+    await UserFinancialAccount.update({account_balance: senderAccount.account_balance - transaction_amount}, { where: { id: senderAccount.id }, transaction: transaction })
+
+    //Now create the credit record for the recipient
+    const creditTransaction = await Credit.create({
+        user_account_id: recipientAccount.user_id,
+        amount: transaction_amount,
+        balance_before: recipientAccount.account_balance,
+        balance_after: recipientAccount.account_balance + transaction_amount,
+        status: 'pending',
+        type: 'INTRA',
+        source_account_id: senderAccount.id,
+        source_account_name: senderAccount.tag,
+    }, { transaction: transaction })
+
+    //Now update recipient account
+    await UserFinancialAccount.update({account_balance: recipientAccount.account_balance + transaction_amount}, { where: { id: recipientAccount.id }, transaction: transaction })
+    
+    await transaction.commit()
+    
+    }
+    catch(err: any)
+    {
+        await transaction.rollback()
+        return res.status(401).send({ message: `Transaction failed. ${err.message}`})
+    }
+    
+
    
 })
 
