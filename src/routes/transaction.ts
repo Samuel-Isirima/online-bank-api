@@ -306,6 +306,27 @@ transactionRouter.get('/get', bodyParser.urlencoded(), async(req: Request, res: 
         return res.status(401).send({ message: `Failed to fetch transaction. Invalid transaction reference.`})
     }
 
+    if(transaction.credit_record_id)
+    {
+        const creditRecord = await Credit.findOne({ where: { id: transaction.credit_record_id } })
+        if(!creditRecord)
+        {
+            return res.status(401).send({ message: `Failed to fetch transaction. Invalid transaction reference.`})
+        }
+
+        return res.status(200).send({ message: `Transaction fetched successfully.`, transaction: creditRecord })
+    }
+    else if(transaction.debit_record_id)
+    {
+        const debitRecord = await Debit.findOne({ where: { id: transaction.debit_record_id } })
+        if(!debitRecord)
+        {
+            return res.status(401).send({ message: `Failed to fetch transaction. Invalid transaction reference.`})
+        }
+
+        return res.status(200).send({ message: `Transaction fetched successfully.`, transaction: debitRecord })
+    }
+
     return res.status(200).send({ message: `Transaction fetched successfully.`, transaction: transaction })
 })
 
