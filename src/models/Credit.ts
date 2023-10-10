@@ -17,6 +17,9 @@ interface CreditAttributes {
     source_account_bank?: string;
     source_account_number?: number;
 
+    reference?: string;
+    transaction_id?: string;        //Shared between the credit and debit
+
     created_at?: Date;
     updated_at?: Date;
     deleted_at?: Date;
@@ -41,10 +44,13 @@ class Credit extends Model<CreditAttributes, CreditObjectForCreateCredit> implem
     public source_account_name!: string
     public source_account_bank!: string
     public source_account_number!: number
+    public reference!: string
+    public transaction_id!: string
     // timestamps!
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
     public readonly deleted_at!: Date;
+
     
 }
 
@@ -101,7 +107,17 @@ Credit.init({
      source_account_number: {
      type: DataTypes.INTEGER.UNSIGNED,
      allowNull: true,
-     }},
+     },
+     reference: {
+        type: DataTypes.STRING,
+        allowNull: false,
+     },
+     transaction_id: {
+        type: DataTypes.STRING,
+        allowNull: false,
+     },
+    
+    },
 
 {
 tableName: 'card',

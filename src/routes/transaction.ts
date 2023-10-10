@@ -102,6 +102,14 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
         destination_account_name: recipientAccount.tag,
     }, { transaction: transaction })
 
+    //Now create the transaction record
+    const transactionRecord = await Transaction.create({
+        user_account_id: senderAccount.user_id,
+        debit_record_id: debitTransaction.id,
+        credit_record_id: null,
+        reference: generateTransactionRef(30),
+        type: 'DEBIT',
+    }, { transaction: transaction })
 
     //Now update sender account
     await UserFinancialAccount.update({account_balance: senderAccount.account_balance - transaction_amount}, { where: { id: senderAccount.id }, transaction: transaction })
@@ -340,6 +348,23 @@ function extractValidationErrorMessages(errors: any): string[] {
     }
     
     return errorMessages;
+}
+
+
+// program to generate random strings
+
+// declare all characters
+const characters: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+function generateTransactionRef(length) : string
+{
+    let result : string = '';
+    const charactersLength: number = characters.length;
+    for ( let i = 0; i < length; i++ ) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+
+    return result;
 }
     
 

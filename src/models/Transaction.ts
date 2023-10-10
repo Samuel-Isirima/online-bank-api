@@ -9,8 +9,8 @@ interface TransactionAttributes {
     user_account_id: number;
     type: string;
     reference: string;
-    credit_record_id?: number;
-    debit_record_id?: number;
+    credit_record_id?: number | null;
+    debit_record_id?: number | null;
     created_at?: Date;
     updated_at?: Date;
     deleted_at?: Date;
@@ -28,8 +28,8 @@ class Transaction extends Model<TransactionAttributes, TransactionObjectForCreat
     public type!: string
     public reference!: string
     public credit_record_id!: number
-    public debit_record_id!: number
-    // timestamps!
+    public debit_record_id!: number 
+        // timestamps!
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
     public readonly deleted_at!: Date;
