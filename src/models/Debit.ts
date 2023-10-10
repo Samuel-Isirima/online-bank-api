@@ -17,6 +17,9 @@ interface DebitAttributes {
     destination_account_bank?: string;
     destination_account_number?: number;
 
+    reference?: string;
+    transaction_id?: string;        //Shared between the credit and debit
+
     created_at?: Date;
     updated_at?: Date;
     deleted_at?: Date;
@@ -41,6 +44,8 @@ class Debit extends Model<DebitAttributes, DebitObjectForCreateDebit> implements
     public destination_account_name!: string
     public destination_account_bank!: string
     public destination_account_number!: number
+    public reference!: string
+    public transaction_id!: string
     // timestamps!
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
@@ -101,10 +106,20 @@ Debit.init({
     destination_account_number: {
     type: DataTypes.INTEGER.UNSIGNED,
     allowNull: true,
-    }},
+    },
+    reference: {
+        type: DataTypes.STRING,
+        allowNull: false,
+     },
+     transaction_id: {
+        type: DataTypes.STRING,
+        allowNull: false,
+     },
+    
+},
 
 {
-tableName: 'card',
+tableName: 'debit',
 sequelize: DatabaseConnection,
 paranoid: true,
 updatedAt: 'updated_at',

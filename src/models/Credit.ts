@@ -120,7 +120,7 @@ Credit.init({
     },
 
 {
-tableName: 'card',
+tableName: 'credit',
 sequelize: DatabaseConnection,
 paranoid: true,
 updatedAt: 'updated_at',

@@ -126,6 +126,8 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
         source_account_name: senderAccount.tag,
     }, { transaction: transaction })
 
+    //Now create the update the transaction record
+
     //Now update recipient account
     await UserFinancialAccount.update({account_balance: recipientAccount.account_balance + transaction_amount}, { where: { id: recipientAccount.id }, transaction: transaction })
     
