@@ -90,6 +90,10 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
 
     try
     {
+    const debitRef = generateTransactionRef(30)
+    const creditRef = generateTransactionRef(30)
+    const transactionRef = generateTransactionRef(30)
+
 
     const debitTransaction = await Debit.create({
         user_account_id: senderAccount.user_id,
@@ -100,15 +104,8 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
         type: 'INTRA',
         destination_account_id: recipientAccount.id,
         destination_account_name: recipientAccount.tag,
-    }, { transaction: transaction })
-
-    //Now create the transaction record
-    const transactionRecord = await Transaction.create({
-        user_account_id: senderAccount.user_id,
-        debit_record_id: debitTransaction.id,
-        credit_record_id: null,
-        reference: generateTransactionRef(30),
-        type: 'DEBIT',
+        reference: debitRef,
+        transaction_id: transactionRef
     }, { transaction: transaction })
 
     //Now update sender account
@@ -124,6 +121,8 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
         type: 'INTRA',
         source_account_id: senderAccount.id,
         source_account_name: senderAccount.tag,
+        reference: creditRef,
+        transaction_id: transactionRef
     }, { transaction: transaction })
 
     //Now create the update the transaction record
@@ -166,6 +165,10 @@ transactionRouter.post('/send/inter', bodyParser.urlencoded(), async(req: Reques
     }
 
     const payload = req.body  
+    const debitRef = generateTransactionRef(30)
+    const creditRef = generateTransactionRef(30)
+    const transactionRef = generateTransactionRef(30)
+
 
     //Deconstruct the payload
     const { amount, sender_account_id, recipient_account_number, recipient_account_name, recipient_account_bank } = payload
@@ -190,27 +193,6 @@ transactionRouter.post('/send/inter', bodyParser.urlencoded(), async(req: Reques
         return res.status(401).send({ message: `Transaction failed. Insufficient balance.`})
     }
 
-    //confirm that the recipient account exists
-    let recipientAccount: UserFinancialAccount | null = null
-    if(recipient_account_number)
-    {
-        recipientAccount = await UserFinancialAccount.findOne({ where: { account_number: recipient_account_number } })
-    }
-    else
-    {
-        return res.status(401).send({ message: `Transaction failed. Invalid recipient account.`})
-    }
-
-    if(!recipientAccount)
-    {
-        return res.status(401).send({ message: `Transaction failed. Invalid recipient account.`})
-    }
-
-    //Check if the accounts have the same currency
-    if(senderAccount.currency !== recipientAccount.currency)
-    {
-        return res.status(401).send({ message: `Transaction failed. Accounts have different currencies. Please use our currency exchange service.`})
-    }
 
     var transaction: any = await sequelize.transaction()
 
@@ -227,31 +209,38 @@ transactionRouter.post('/send/inter', bodyParser.urlencoded(), async(req: Reques
         balance_after: senderAccount.account_balance - amount,
         status: 'pending',
         type: 'INTRA',
-        destination_account_id: recipientAccount.id,
-        destination_account_name: recipientAccount.tag,
+        destination_account_name: recipient_account_name,
+        destination_account_bank: recipient_account_bank,
+        destination_account_number: recipient_account_number,
+        reference: debitRef,
+        transaction_id: transactionRef
     }, { transaction: transaction })
 
 
     //Now update sender account
     await UserFinancialAccount.update({account_balance: senderAccount.account_balance - transaction_amount}, { where: { id: senderAccount.id }, transaction: transaction })
 
-    //Now create the credit record for the recipient
-    const creditTransaction = await Credit.create({
-        user_account_id: recipientAccount.user_id,
-        amount: transaction_amount,
-        balance_before: recipientAccount.account_balance,
-        balance_after: recipientAccount.account_balance + transaction_amount,
-        status: 'pending',
-        type: 'INTRA',
-        source_account_id: senderAccount.id,
-        source_account_name: senderAccount.tag,
-    }, { transaction: transaction })
-
-    //Now update recipient account
-    await UserFinancialAccount.update({account_balance: recipientAccount.account_balance + transaction_amount}, { where: { id: recipientAccount.id }, transaction: transaction })
-    
     await transaction.commit()
-    
+
+    //Now send the data to the endpoint of the recipient's bank
+    // const recipientBank = await Bank.findOne({ where: { name: recipient_account_bank } })
+    // if(!recipientBank)
+    // {
+    //     return res.status(401).send({ message: `Transaction failed. Invalid recipient bank.`})
+    // }
+    // const recipientBankEndpoint = recipientBank.endpoint
+    // const recipientBankSecret = recipientBank.secret
+    // const recipientBankPublicKey = recipientBank.public_key
+    // const recipientBankName = recipientBank.name
+    // const recipientBankId = recipientBank.id
+    var transactionData = {
+    amount: transaction_amount,
+    sender_account_name: senderAccount.tag,
+    sender_account_bank: 'Online Bank API',
+    sender_account_number: senderAccount.account_number,
+    transaction_id: transactionRef,
+    }
+
     }
     catch(err: any)
     {
