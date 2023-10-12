@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Bank from '../models/Bank';
 
 interface InterBankTransactionPublishServiceInterface 
 {
@@ -29,7 +30,7 @@ transaction_data: any;
  */
 
 
-publishTransaction(): boolean;
+publishTransaction(): Promise<boolean>;
 logTransaction(): void;
 }
 
@@ -55,11 +56,15 @@ transaction_data!: any;
     }
 
 
-    publishTransaction(): boolean 
+    async publishTransaction(): Promise<boolean> 
     {
-        //Send data to endpoint
-        axios.post(this.bank_transaction_endpoint, this.transaction_data)
-        .then(response => {
+        //Send data to endpoint with authorization and secret key and return true or false
+        const response: boolean = await axios.post(this.bank_transaction_endpoint, this.transaction_data, {
+            headers: {
+                'Authorization': this.bank_api_key,
+                'Secret': this.bank_secret_key
+            }
+        }).then(response => {
             if (response.status === 200) 
             {
             return true;
@@ -68,12 +73,13 @@ transaction_data!: any;
             {
             return false;
             }
-        })
-        .catch(error => 
+        }).catch(error =>
         {
             return false;
-        });
-        return false;
+        })
+
+        return response
+       
     }
 
     logTransaction(): void 
