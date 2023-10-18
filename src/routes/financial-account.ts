@@ -27,8 +27,6 @@ financialAccountRouter.post('/withdraw', bodyParser.urlencoded(), async(req: Req
         "recipient_account_number": "required_without:recipient_account_tag|string",
         "recipient_account_tag": "required_without:recipient_account_number|string",
     };
-
-
    
 })
 
