@@ -108,6 +108,9 @@ transactionRouter.post('/send/intra', bodyParser.urlencoded(), async(req: Reques
         transaction_id: transactionRef
     }, { transaction: transaction })
 
+    //Use a queue for this!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    
     //Now update sender account
     await UserFinancialAccount.update({account_balance: senderAccount.account_balance - transaction_amount}, { where: { id: senderAccount.id }, transaction: transaction })
 
